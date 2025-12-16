@@ -316,11 +316,12 @@ vc = vc_interp(rsonic)
 T_rsonic  =  mu * mp * vc**2/gamma/kb
 print(T_rsonic)
 T_rsonic  =500000 
+T_rsonic  =470000 
+eps=1.e-1
 v_rsonic, rho_rsonic, Mdot, Mach = find_init_at_Rsonic_varying_lambda(rsonic,T_rsonic)
 r_ini, v_ini, T_ini, rho_ini, M = soln_at_esp(v_rsonic, T_rsonic, rho_rsonic, rsonic, eps)
 print('Initial conditions are- v,rho,Mdot,Mach=',v_rsonic/kmps, rho_rsonic/mp, Mdot*yr_to_sec/Msun, M)
 
-eps=1.e-1
 solution, Mdot1 =find_sol(v_rsonic, T_rsonic, rho_rsonic, Mdot, rsonic, eps)
 if solution.t_events[0].size > 0:
     print(f"Stopped at r = {np.exp(solution.t_events[0][0])/kpc:.2f} kpc because Mach>1")
@@ -342,7 +343,8 @@ tcool = np.zeros(rkpc.shape[0])
 lambda_cool = np.zeros(rkpc.shape[0])
 for i in range(tcool.shape[0]):
     P = kb * rho[i] * T[i]/0.6/mp
-    log10nH = np.log10(X * rho[i]/mp)
+    nH = X * rho[i]/mp
+    log10nH = np.log10(nH)
     log10T  = np.log10(T[i])
     cloudy = 10.**((log10lambda_cloudy((log10nH, log10T))))
     lambda_cool[i] = cloudy
@@ -395,7 +397,7 @@ ax[0].text(0.6, 0.8, r'$M_{\rm halo}$=%.1e'%(Mhalo/Msun), transform=ax[0].transA
 # ax[0].text(0.6, 0.7, r'$\rho_{\rm ini}$=%.1e'%(rho0/mp), transform=ax[0].transAxes)
 # ax[0].text(0.6, 0.6, r'$T_{\rm ini}$=%.1e'%(T), transform=ax[0].transAxes)
 
-image_name = 'Figures/solution_%.2f'%(Mdot*yr_to_sec/Msun) + '_eps_' + str(eps) + '_rsonic_' + str(rsonic/kpc)   +'.jpeg'
+image_name = 'Figures/solution_%.2f'%(Mdot*yr_to_sec/Msun) + '_eps_' + str(eps) + '_rsonic_' + str(rsonic/kpc) + '_Trsonic_' + str(T_rsonic/1.e6)   +'.jpeg'
 plt.savefig(image_name, bbox_inches='tight')
 
 
@@ -418,7 +420,7 @@ dphi = vc_interp(r_mid) **2 * dr_grid/r_mid
 phi_int = -np.cumsum(dphi)
 phi = -phi_int + phi_int[-1]
 Bern_param = v_mid*v_mid/2.0 + cs_mid*cs_mid/(gamma-1) + phi
-
+plt.figure(figsize=(8,8))
 Rmax = 2000. * kpc
 idx = np.argmin(np.abs(r - Rmax))
 plt.plot(r_mid/kpc, (Bern_param/1.e5/kmps/kmps))
