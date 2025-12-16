@@ -1,11 +1,10 @@
-import astropy.constants as const
 
 #Constants
 H0   = 67.0
-Msun = const.M_sun.cgs.value
-G = const.G.cgs.value
-mp = const.m_p.cgs.value
-kpc = const.kpc.cgs.value
+Msun = 1.988409870698051e+33
+G = 6.674299999999999e-08
+mp = 1.67262192369e-24
+kpc = 3.0856775814913673e+2
 gamma = 5./3.
 yr_to_sec = 3.154e+7
 Myr = yr_to_sec * 1.e6
