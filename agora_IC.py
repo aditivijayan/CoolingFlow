@@ -5,7 +5,6 @@ from scipy.integrate import solve_ivp
 import math
 from units import *
 from scipy.optimize import root_scalar
-from numba import njit
 from scipy.interpolate import interp1d
 from scipy.interpolate import RegularGridInterpolator
 
