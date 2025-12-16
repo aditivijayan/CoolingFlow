@@ -168,8 +168,7 @@ def soln_at_esp(v_rsonic, T_rsonic, rho_rsonic, rsonic, eps):
 
 
 
- def find_init_at_Rsonic_varying_lambda(rsonic, T):
-
+def find_init_at_Rsonic_varying_lambda(rsonic, T):
     # Sonic velocity
     cs = np.sqrt(gamma * kb * T / mu / mp)
     v  = cs
