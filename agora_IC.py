@@ -167,7 +167,8 @@ def soln_at_esp(v_rsonic, T_rsonic, rho_rsonic, rsonic, eps):
 
 
 
-def find_init_at_Rsonic_varying_lambda(rsonic, T):
+ def find_init_at_Rsonic_varying_lambda(rsonic, T):
+
     # Sonic velocity
     cs = np.sqrt(gamma * kb * T / mu / mp)
     v  = cs
@@ -315,6 +316,9 @@ vc = vc_interp(rsonic)
 T_rsonic  =  mu * mp * vc**2/gamma/kb
 print(T_rsonic)
 T_rsonic  =500000 
+v_rsonic, rho_rsonic, Mdot, Mach = find_init_at_Rsonic_varying_lambda(rsonic,T_rsonic)
+r_ini, v_ini, T_ini, rho_ini, M = soln_at_esp(v_rsonic, T_rsonic, rho_rsonic, rsonic, eps)
+print('Initial conditions are- v,rho,Mdot,Mach=',v_rsonic/kmps, rho_rsonic/mp, Mdot*yr_to_sec/Msun, M)
 
 eps=1.e-1
 solution, Mdot1 =find_sol(v_rsonic, T_rsonic, rho_rsonic, Mdot, rsonic, eps)
