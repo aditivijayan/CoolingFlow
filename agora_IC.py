@@ -315,120 +315,117 @@ rsonic = 0.5*kpc
 vc = vc_interp(rsonic)
 T_rsonic  =  mu * mp * vc**2/gamma/kb
 print(T_rsonic)
-T_rsonic  =500000 
-T_rsonic  =470000 
+T_rsonic  = 
+T_rsonic_guess  = [500000, 470000, 450000, 430000, 410000] 
 eps=1.e-1
-v_rsonic, rho_rsonic, Mdot, Mach = find_init_at_Rsonic_varying_lambda(rsonic,T_rsonic)
-r_ini, v_ini, T_ini, rho_ini, M = soln_at_esp(v_rsonic, T_rsonic, rho_rsonic, rsonic, eps)
-print('Initial conditions are- v,rho,Mdot,Mach=',v_rsonic/kmps, rho_rsonic/mp, Mdot*yr_to_sec/Msun, M)
+for T_rsonic in T_rsonic_guess:
+    print('Trying T_rsonic=',T_rsonic)
+    v_rsonic, rho_rsonic, Mdot, Mach = find_init_at_Rsonic_varying_lambda(rsonic,T_rsonic)
+    r_ini, v_ini, T_ini, rho_ini, M = soln_at_esp(v_rsonic, T_rsonic, rho_rsonic, rsonic, eps)
+    print('Initial conditions are- v,rho,Mdot,Mach=',v_rsonic/kmps, rho_rsonic/mp, Mdot*yr_to_sec/Msun, M)
 
-solution, Mdot1 =find_sol(v_rsonic, T_rsonic, rho_rsonic, Mdot, rsonic, eps)
-if solution.t_events[0].size > 0:
-    print(f"Stopped at r = {np.exp(solution.t_events[0][0])/kpc:.2f} kpc because Mach>1")
-else:
-    print("Solver finished normally")
+    solution, Mdot1 =find_sol(v_rsonic, T_rsonic, rho_rsonic, Mdot, rsonic, eps)
+    if solution.t_events[0].size > 0:
+        print(f"Stopped at r = {np.exp(solution.t_events[0][0])/kpc:.2f} kpc because Mach>1")
+    else:
+        print("Solver finished normally")
 
-T = np.exp(solution.y[0])
-rho = np.exp(solution.y[1])
-lnr = (solution.t)
-cs = np.sqrt(gamma * kb * T/(0.6 * mp))
-rkpc = np.exp(lnr)/kpc
-r = rkpc*kpc
-v = Mdot/(4*math.pi*r*r*rho)
-Mach = v/cs
-tflow = np.exp(lnr)/v
-tff = np.sqrt(2) * r/v
+    T = np.exp(solution.y[0])
+    rho = np.exp(solution.y[1])
+    lnr = (solution.t)
+    cs = np.sqrt(gamma * kb * T/(0.6 * mp))
+    rkpc = np.exp(lnr)/kpc
+    r = rkpc*kpc
+    v = Mdot/(4*math.pi*r*r*rho)
+    Mach = v/cs
+    tflow = np.exp(lnr)/v
+    tff = np.sqrt(2) * r/v
 
-tcool = np.zeros(rkpc.shape[0])
-lambda_cool = np.zeros(rkpc.shape[0])
-for i in range(tcool.shape[0]):
-    P = kb * rho[i] * T[i]/0.6/mp
-    nH = X * rho[i]/mp
-    log10nH = np.log10(nH)
-    log10T  = np.log10(T[i])
-    cloudy = 10.**((log10lambda_cloudy((log10nH, log10T))))
-    lambda_cool[i] = cloudy
-    # cloudy = 0.6e-22
-    tcool[i] = P/(nH*nH*cloudy*(gamma-1))
-
-
-# lambda_cool = 0.6e-22
-tratio = tcool/tflow
-Mach_anl = 0.11 * (Mhalo/(1.e12*Msun))**(-0.72) * (Mdot/(Msun/yr_to_sec))**(0.5) * (lambda_cool/1.e-22)**(0.5) * (r/100/kpc)**(-0.3) 
-nH_anl   = 1.6e-5 * (Mhalo/(1.e12*Msun))**(0.36) * (lambda_cool/1.e-22)**(-0.5) * (r/100/kpc)**(-1.6)
-tcool_anl = 7.2 * (Mhalo/(1.e12*Msun))**(0.36) * (Mdot/(Msun/yr_to_sec))**(-0.5) * (lambda_cool/1.e-22)**(-0.5) * (r/100/kpc)**(1.4) 
-T_anl = X * mu * tcool_anl * (gamma-1) * nH_anl * lambda_cool * 1.e9 * yr_to_sec/kb 
-Rsonic = 0.06 * (Mhalo/(1.e12*Msun))**(-2.4) * (Mdot/(Msun/yr_to_sec))**(1.67) * (lambda_cool/1.e-22)**(0.36) * kpc
-Rhalf = 3.0*(Mhalo/1e12/Msun)**(1/3)*kpc
+    tcool = np.zeros(rkpc.shape[0])
+    lambda_cool = np.zeros(rkpc.shape[0])
+    for i in range(tcool.shape[0]):
+        P = kb * rho[i] * T[i]/0.6/mp
+        nH = X * rho[i]/mp
+        log10nH = np.log10(nH)
+        log10T  = np.log10(T[i])
+        cloudy = 10.**((log10lambda_cloudy((log10nH, log10T))))
+        lambda_cool[i] = cloudy
+        # cloudy = 0.6e-22
+        tcool[i] = P/(nH*nH*cloudy*(gamma-1))
 
 
-fig, ax = plt.subplots(4, 1, gridspec_kw = {'wspace':0.1, 'hspace':0.0},figsize=(6, 18))
-
-ylabel = [r'$\rho/m_p$', r'$T$ [K]', r'$M$', r'$t_{\rm cool}$']
-
-ax[0].plot(rkpc, rho*X/mp)
-ax[0].plot(rkpc, nH_anl)
-ax[1].plot(rkpc, T)
-ax[1].plot(rkpc, T_anl)
-ax[2].plot(rkpc, Mach)
-ax[2].plot(rkpc, Mach_anl)
-ax[3].plot(rkpc, tcool/yr_to_sec/1.e9)
-ax[3].plot(rkpc, tcool_anl)
+    # lambda_cool = 0.6e-22
+    tratio = tcool/tflow
+    Mach_anl = 0.11 * (Mhalo/(1.e12*Msun))**(-0.72) * (Mdot/(Msun/yr_to_sec))**(0.5) * (lambda_cool/1.e-22)**(0.5) * (r/100/kpc)**(-0.3) 
+    nH_anl   = 1.6e-5 * (Mhalo/(1.e12*Msun))**(0.36) * (lambda_cool/1.e-22)**(-0.5) * (r/100/kpc)**(-1.6)
+    tcool_anl = 7.2 * (Mhalo/(1.e12*Msun))**(0.36) * (Mdot/(Msun/yr_to_sec))**(-0.5) * (lambda_cool/1.e-22)**(-0.5) * (r/100/kpc)**(1.4) 
+    T_anl = X * mu * tcool_anl * (gamma-1) * nH_anl * lambda_cool * 1.e9 * yr_to_sec/kb 
+    Rsonic = 0.06 * (Mhalo/(1.e12*Msun))**(-2.4) * (Mdot/(Msun/yr_to_sec))**(1.67) * (lambda_cool/1.e-22)**(0.36) * kpc
+    Rhalf = 3.0*(Mhalo/1e12/Msun)**(1/3)*kpc
 
 
-ax[-1].set_xlabel('r [kpc]')
-for i in range(4):
-    ax[i].set_ylabel(ylabel[i])
-plt.setp(ax, 'xscale', ('log'))
-plt.setp(ax, 'yscale', ('log'))
-# plt.setp(ax, 'xlim', (0.5,2.))
-ax[0].set_ylim(1.e-6, 4.e-1)
-ax[1].set_ylim(1.e3, 4.e6)
-ax[2].set_ylim(1.e-2,1.e1)
-ax[3].set_ylim(1.e-3,1.e3)
+    fig, ax = plt.subplots(4, 1, gridspec_kw = {'wspace':0.1, 'hspace':0.0},figsize=(6, 18))
 
-ax[0].tick_params(axis='x', which='both', labelbottom=False, top=True, bottom=True)
-ax[1].tick_params(axis='x', which='both', labelbottom=False, top=True, bottom=True)
-ax[-2].tick_params(axis='x', which='both', top=True, bottom=True, labelbottom=False)
-ax[-1].tick_params(axis='x', which='both', top=True, bottom=True, labelbottom=True)
-ax[0].set_title(r'$\dot{M}$=%.1e'%(Mdot*yr_to_sec/Msun) + r' $M_{\odot} \ \rm{yr}^{-1}$')
-ax[0].text(0.6, 0.8, r'$M_{\rm halo}$=%.1e'%(Mhalo/Msun), transform=ax[0].transAxes)
-# ax[0].text(0.6, 0.7, r'$M_{\rm gas}$=%.1e'%(tot_gas_mass/Msun), transform=ax[0].transAxes)
-# ax[0].text(0.6, 0.7, r'$\rho_{\rm ini}$=%.1e'%(rho0/mp), transform=ax[0].transAxes)
-# ax[0].text(0.6, 0.6, r'$T_{\rm ini}$=%.1e'%(T), transform=ax[0].transAxes)
+    ylabel = [r'$\rho/m_p$', r'$T$ [K]', r'$M$', r'$t_{\rm cool}$']
 
-image_name = 'Figures/solution_%.2f'%(Mdot*yr_to_sec/Msun) + '_eps_' + str(eps) + '_rsonic_' + str(rsonic/kpc) + '_Trsonic_' + str(T_rsonic/1.e6)   +'.jpeg'
-plt.savefig(image_name, bbox_inches='tight')
+    ax[0].plot(rkpc, rho*X/mp)
+    ax[0].plot(rkpc, nH_anl)
+    ax[1].plot(rkpc, T)
+    ax[1].plot(rkpc, T_anl)
+    ax[2].plot(rkpc, Mach)
+    ax[2].plot(rkpc, Mach_anl)
+    ax[3].plot(rkpc, tcool/yr_to_sec/1.e9)
+    ax[3].plot(rkpc, tcool_anl)
 
 
-T = np.exp(solution.y[0])
-rho = np.exp(solution.y[1])
-lnr = (solution.t)
+    ax[-1].set_xlabel('r [kpc]')
+    for i in range(4):
+        ax[i].set_ylabel(ylabel[i])
+    plt.setp(ax, 'xscale', ('log'))
+    plt.setp(ax, 'yscale', ('log'))
+    # plt.setp(ax, 'xlim', (0.5,2.))
+    ax[0].set_ylim(1.e-6, 4.e-1)
+    ax[1].set_ylim(1.e3, 4.e6)
+    ax[2].set_ylim(1.e-2,1.e1)
+    ax[3].set_ylim(1.e-3,1.e3)
 
-cs = np.sqrt(gamma * kb * T/(mu * mp))
+    ax[0].tick_params(axis='x', which='both', labelbottom=False, top=True, bottom=True)
+    ax[1].tick_params(axis='x', which='both', labelbottom=False, top=True, bottom=True)
+    ax[-2].tick_params(axis='x', which='both', top=True, bottom=True, labelbottom=False)
+    ax[-1].tick_params(axis='x', which='both', top=True, bottom=True, labelbottom=True)
+    ax[0].set_title(r'$\dot{M}$=%.1e'%(Mdot*yr_to_sec/Msun) + r' $M_{\odot} \ \rm{yr}^{-1}$')
+    ax[0].text(0.6, 0.8, r'$M_{\rm halo}$=%.1e'%(Mhalo/Msun), transform=ax[0].transAxes)
+    # ax[0].text(0.6, 0.7, r'$M_{\rm gas}$=%.1e'%(tot_gas_mass/Msun), transform=ax[0].transAxes)
+    # ax[0].text(0.6, 0.7, r'$\rho_{\rm ini}$=%.1e'%(rho0/mp), transform=ax[0].transAxes)
+    # ax[0].text(0.6, 0.6, r'$T_{\rm ini}$=%.1e'%(T), transform=ax[0].transAxes)
 
-cs_mid = 0.5*(cs[:-1] + cs[1:])
-rho_mid = 0.5 * (rho[:-1] + rho[1:])
+    image_name = 'Figures/solution_%.2f'%(Mdot*yr_to_sec/Msun) + '_eps_' + str(eps) + '_rsonic_' + str(rsonic/kpc) + '_Trsonic_' + str(T_rsonic/1.e6)   +'.jpeg'
+    plt.savefig(image_name, bbox_inches='tight')
 
-r_grid = np.exp(lnr)
-r_mid = 0.5 * (r_grid[:-1] + r_grid[1:])
-dr_grid = np.diff(r_grid)
 
-v_mid = Mdot/(4*math.pi*r_mid**2*rho_mid)
+    cs = np.sqrt(gamma * kb * T/(mu * mp))
 
-dphi = vc_interp(r_mid) **2 * dr_grid/r_mid
-phi_int = -np.cumsum(dphi)
-phi = -phi_int + phi_int[-1]
-Bern_param = v_mid*v_mid/2.0 + cs_mid*cs_mid/(gamma-1) + phi
-plt.figure(figsize=(8,8))
-Rmax = 2000. * kpc
-idx = np.argmin(np.abs(r - Rmax))
-plt.plot(r_mid/kpc, (Bern_param/1.e5/kmps/kmps))
-plt.axhline(0.0, color='black')
-# plt.xlim(1.e-1, 1.e3)
+    cs_mid = 0.5*(cs[:-1] + cs[1:])
+    rho_mid = 0.5 * (rho[:-1] + rho[1:])
 
-plt.xscale('log')
-print(Bern_param[-1]/1.e5/kmps/kmps)
+    r_grid = np.exp(lnr)
+    r_mid = 0.5 * (r_grid[:-1] + r_grid[1:])
+    dr_grid = np.diff(r_grid)
 
-image_name = 'Figures/bern_%.2f'%(Mdot*yr_to_sec/Msun) + '_eps_' + str(eps) + '_rsonic_' + str(rsonic/kpc)   +'.jpeg'
-plt.savefig(image_name, bbox_inches='tight')
+    v_mid = Mdot/(4*math.pi*r_mid**2*rho_mid)
+
+    dphi = vc_interp(r_mid) **2 * dr_grid/r_mid
+    phi_int = -np.cumsum(dphi)
+    phi = -phi_int + phi_int[-1]
+    Bern_param = v_mid*v_mid/2.0 + cs_mid*cs_mid/(gamma-1) + phi
+    plt.figure(figsize=(8,8))
+    Rmax = 2000. * kpc
+    idx = np.argmin(np.abs(r - Rmax))
+    plt.plot(r_mid/kpc, (Bern_param/1.e5/kmps/kmps))
+    plt.axhline(0.0, color='black')
+    
+    plt.xscale('log')
+    print(Bern_param[-1]/1.e5/kmps/kmps)
+
+    image_name = 'Figures/bern_%.2f'%(Mdot*yr_to_sec/Msun) + '_eps_' + str(eps) + '_rsonic_' + str(rsonic/kpc)   +'.jpeg'
+    plt.savefig(image_name, bbox_inches='tight')
